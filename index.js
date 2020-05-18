@@ -60,6 +60,16 @@ generateId = () => Math.round(Math.random()*1000000000)
 app.post('/api/persons', (req, res) => {
     const body = req.body
 
+    if(!body.name || !body.number) return res.status(400).json({
+        error: 'incomplete information, pls send full info'
+    })
+
+    if(persons.find(person => person.name === body.name) !== undefined) {
+        return res.status(400).json({
+            error: 'name already exists'
+        })
+    }
+
     const person = {
         name: body.name,
         number: body.number,
