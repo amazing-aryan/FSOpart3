@@ -1,7 +1,21 @@
 const express = require('express')
+const morgan = require('morgan')
+
 const app = express()
 
+morgan.token('data', (tokens, req,res,) => {
+    return [
+        req.method, 
+        req.originalUrl, 
+        res.statusCode, 
+        req.headers['content-length'], '-',
+        tokens['response-time'](req,res), 'ms',
+        JSON.stringify(req.body)
+    ].join(' ')
+})
+
 app.use(express.json())
+app.use(morgan('data', {skip: (req,res) => req.method !== 'POST'}))
 
 let persons = [
     {
@@ -59,7 +73,6 @@ generateId = () => Math.round(Math.random()*1000000000)
 
 app.post('/api/persons', (req, res) => {
     const body = req.body
-
     if(!body.name || !body.number) return res.status(400).json({
         error: 'incomplete information, pls send full info'
     })
