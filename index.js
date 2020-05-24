@@ -18,6 +18,7 @@ morgan.token('data', (tokens, req,res,) => {
 app.use(express.json())
 app.use(morgan('data', {skip: (req,res) => req.method !== 'POST'}))
 app.use(cors())
+app.use(express.static('build'))
 
 let persons = [
     {
