@@ -60,8 +60,12 @@ app.get('/info', (request, response) => {
 })
 
 app.get('/api/persons/:id', (req, res) => {
-    Person.find({}).then(notes => {
-        response.json(notes)
+    Person.findById(req.params.id).then(note => {
+        res.json(note)
+    })
+    .catch(error => {
+        console.log(error)
+        res.status(404).end()
     })
 })
 
