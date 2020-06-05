@@ -1,6 +1,8 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const Person = require('./models/person')
 
 const app = express()
 
@@ -44,7 +46,9 @@ let persons = [
 ]
 
 app.get('/api/persons', (request, response) => {
-    response.json(persons);
+    Person.find({}).then(persons => {
+        response.json(persons)
+    })
 })
 
 app.get('/info', (request, response) => {
@@ -56,13 +60,9 @@ app.get('/info', (request, response) => {
 })
 
 app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const person = persons.find(person => person.id === id)
-    if(person) {
-        res.json(person)
-    } else {
-        res.status(404).end();
-    }
+    Person.find({}).then(notes => {
+        response.json(notes)
+    })
 })
 
 app.delete('/api/persons/:id', (req,res) => {
@@ -80,20 +80,14 @@ app.post('/api/persons', (req, res) => {
         error: 'incomplete information, pls send full info'
     })
 
-    if(persons.find(person => person.name === body.name) !== undefined) {
-        return res.status(400).json({
-            error: 'name already exists'
-        })
-    }
-
-    const person = {
+    const person = new Person({
         name: body.name,
         number: body.number,
-        id: generateId()
-    }
+    })
     
-    persons = persons.concat(person)
-    res.json(person)
+    person.save().then(savedContact => {
+        res.json(savedContact)
+    })
 })
 
 PORT = process.env.PORT || 3001
