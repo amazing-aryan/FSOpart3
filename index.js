@@ -29,11 +29,13 @@ app.get('/api/persons', (request, response) => {
 })
 
 app.get('/info', (request, response) => {
-    const size = Person.count({})
-    const msg = `Phonebook has info for ${size} people`
-    const date = new Date()
-    const info = `<div>${msg}</br>${date}</div>`
-    response.send(info);
+    const size = Person.countDocuments()
+        .then(count =>{
+            const msg = `Phonebook has info for ${count} people`
+            const date = new Date()
+            const info = `<div>${msg}</br>${date}</div>`
+            response.send(info);
+        })
 })
 
 app.get('/api/persons/:id', (req, res) => {
