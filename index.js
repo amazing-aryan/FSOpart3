@@ -17,33 +17,10 @@ morgan.token('data', (tokens, req,res,) => {
     ].join(' ')
 })
 
-app.use(express.json())
-app.use(morgan('data', {skip: (req,res) => req.method !== 'POST'}))
-app.use(cors())
 app.use(express.static('build'))
-
-let persons = [
-    {
-        "name": "Arto Hellas",
-        "number": "040-123456",
-        "id": 1
-    },
-    {
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523",
-        "id": 2
-    },
-    {
-        "name": "Dan Abramov",
-        "number": "12-43-234345",
-        "id": 3
-    },
-    {
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122",
-        "id": 4
-    }
-]
+app.use(express.json())
+app.use(cors())
+app.use(morgan('data', {skip: (req,res) => req.method !== 'POST'}))
 
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {
@@ -52,7 +29,7 @@ app.get('/api/persons', (request, response) => {
 })
 
 app.get('/info', (request, response) => {
-    const size = persons.length
+    const size = Person.count({})
     const msg = `Phonebook has info for ${size} people`
     const date = new Date()
     const info = `<div>${msg}</br>${date}</div>`
@@ -60,23 +37,24 @@ app.get('/info', (request, response) => {
 })
 
 app.get('/api/persons/:id', (req, res) => {
-    Person.findById(req.params.id).then(note => {
-        res.json(note)
-    })
-    .catch(error => {
-        console.log(error)
-        res.status(404).end()
-    })
+    Person.findById(req.params.id)
+        .then(person => {
+        if(person) {
+            res.json(person)
+        } else {
+            res.status(404).end()
+        }
+        })
+        .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (req,res) => {
-    const id = Number(req.params.id)
-    persons = persons.filter(person => person.id !== id)
-
-    res.status(204).end()
+app.delete('/api/persons/:id', (req, res, next) => {
+    Person.findByIdAndDelete(req.params.id)
+        .then(result => {
+            res.status(204).end()
+        })
+        .catch(error => next(error))
 })
-
-generateId = () => Math.round(Math.random()*1000000000)
 
 app.post('/api/persons', (req, res) => {
     const body = req.body
@@ -86,7 +64,7 @@ app.post('/api/persons', (req, res) => {
 
     const person = new Person({
         name: body.name,
-        number: body.number,
+        number: body.number
     })
     
     person.save().then(savedContact => {
@@ -94,7 +72,33 @@ app.post('/api/persons', (req, res) => {
     })
 })
 
-PORT = process.env.PORT || 3001
+app.put('/api/persons/:id', (request, response, next) => {
+    const body = request.body
+    const person = {
+        name: body.name,
+        number: body.number,
+    }
+
+    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+        .then(updatedPerson => {
+            response.json(updatedPerson)
+        })
+        .catch(error => next(error))
+})
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if(error.name === 'CastError' && error.kind === 'ObjectId') {
+        return response.status(400).send({ error: 'malformatted id'})
+    }
+
+    next(error)
+}
+
+app.use(errorHandler)
+
+PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log("Server is running...");
 })
