@@ -8,9 +8,9 @@ const app = express()
 
 morgan.token('data', (tokens, req,res,) => {
     return [
-        req.method, 
-        req.originalUrl, 
-        res.statusCode, 
+        req.method,
+        req.originalUrl,
+        res.statusCode,
         req.headers['content-length'], '-',
         tokens['response-time'](req,res), 'ms',
         JSON.stringify(req.body)
@@ -20,7 +20,7 @@ morgan.token('data', (tokens, req,res,) => {
 app.use(express.static('build'))
 app.use(express.json())
 app.use(cors())
-app.use(morgan('data', {skip: (req,res) => req.method !== 'POST'}))
+app.use(morgan('data', { skip: (req) => req.method !== 'POST' }))
 
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {
@@ -29,30 +29,30 @@ app.get('/api/persons', (request, response) => {
 })
 
 app.get('/info', (request, response) => {
-    const size = Person.countDocuments()
-        .then(count =>{
+    Person.countDocuments()
+        .then(count => {
             const msg = `Phonebook has info for ${count} people`
             const date = new Date()
             const info = `<div>${msg}</br>${date}</div>`
-            response.send(info);
+            response.send(info)
         })
 })
 
-app.get('/api/persons/:id', (req, res) => {
+app.get('/api/persons/:id', (req, res, next) => {
     Person.findById(req.params.id)
         .then(person => {
-        if(person) {
-            res.json(person)
-        } else {
-            res.status(404).end()
-        }
+            if(person) {
+                res.json(person)
+            } else {
+                res.status(404).end()
+            }
         })
         .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (req, res, next) => {
     Person.findByIdAndDelete(req.params.id)
-        .then(result => {
+        .then(() => {
             res.status(204).end()
         })
         .catch(error => next(error))
@@ -68,7 +68,7 @@ app.post('/api/persons', (req, res) => {
         name: body.name,
         number: body.number
     })
-    
+
     person.save().then(savedContact => {
         res.json(savedContact)
     })
@@ -81,7 +81,7 @@ app.put('/api/persons/:id', (request, response, next) => {
         number: body.number,
     }
 
-    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+    Person.findByIdAndUpdate(request.params.id, person, { new: true })
         .then(updatedPerson => {
             response.json(updatedPerson)
         })
@@ -92,7 +92,7 @@ const errorHandler = (error, request, response, next) => {
     console.error(error.message)
 
     if(error.name === 'CastError' && error.kind === 'ObjectId') {
-        return response.status(400).send({ error: 'malformatted id'})
+        return response.status(400).send({ error: 'malformatted id' })
     }
 
     next(error)
@@ -100,7 +100,7 @@ const errorHandler = (error, request, response, next) => {
 
 app.use(errorHandler)
 
-PORT = process.env.PORT
+const PORT = process.env.PORT
 app.listen(PORT, () => {
-    console.log("Server is running...");
+    console.log('Server is running...')
 })
